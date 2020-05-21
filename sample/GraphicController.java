@@ -5,16 +5,18 @@ import java.util.ArrayList;
 import static java.lang.Math.*;
 
 public class GraphicController {
-    private Graphic graphic;
-    private Boolean firstGraphic = false;
-    private Boolean secondGraphic = false;
+    private Graphic firstGraphic;
+    private Graphic secondGraphic;
+    private Boolean isFirstGraphic = false;
+    private Boolean isSecondGraphic = false;
 
-    GraphicController(Graphic graphic){
-        this.graphic = graphic;
+    GraphicController(){
+        this.firstGraphic = new Graphic(new ArrayList<>());
+        this.secondGraphic = new Graphic(new ArrayList<>());
     }
 
     public double firstFunction(double x){
-        graphic.addElement(new Dot(x,x+5));
+        firstGraphic.addElement(new Dot(x,x+5));
         return x + 5;
     }
 
@@ -30,7 +32,7 @@ public class GraphicController {
             y += temp;
             ++i;
         }
-        graphic.addElement(new Dot(x,y));
+        secondGraphic.addElement(new Dot(x,y));
         return y;
     }
 
@@ -39,38 +41,54 @@ public class GraphicController {
         else return i*factorial(i-1);
     }
 
-    public Boolean getFirstGraphic() {
-        return firstGraphic;
+    public Boolean IsFirstGraphic() {
+        return isFirstGraphic;
     }
 
-    public Boolean getSecondGraphic() {
-        return secondGraphic;
+    public Boolean IsSecondGraphic() {
+        return isSecondGraphic;
+    }
+
+    public void setFirstGraphicActive(Boolean bool) {
+        isFirstGraphic = bool;
+        isSecondGraphic = !bool;
+    }
+
+    public void setSecondGraphicActive(Boolean bool) {
+        isSecondGraphic = bool;
+        isFirstGraphic = !bool;
     }
 
     public void clear(){
-        System.out.println(graphic.getCount());
-        graphic.clear();
+        firstGraphic.clear();
+        secondGraphic.clear();
     }
 
-    public Dot getLastDot(){
-        int i = graphic.getDatabase().size();
+    public Dot getFirstGraphicLastDot(){
+        int i = firstGraphic.getDatabase().size();
         if(i == 0) return new Dot(0,0);
-        else return graphic.getDatabase().get(i-1);
-    }
-    public void addDot(Dot dot){
-        graphic.addElement(dot);
+        else return firstGraphic.getDatabase().get(i-1);
     }
 
-    public ArrayList<DotItem> dotsIntoItems(){
-        ArrayList<Dot> temp = graphic.getDatabase();
-        ArrayList<DotItem> res = new ArrayList();
-        for (Dot dot: temp){
-            res.add(graphic.dotIntoItem(dot));
-        }
-        return res;
+    public Dot getSecondGraphicLastDot(){
+        int i = secondGraphic.getDatabase().size();
+        if(i == 0) return new Dot(0,0);
+        else return secondGraphic.getDatabase().get(i-1);
     }
 
-    public int getCount(){
-        return graphic.getCount();
+//    public ArrayList<DotItem> dotsIntoItems(){
+//        ArrayList<Dot> temp = firstGraphic.getDatabase();
+//        ArrayList<DotItem> res = new ArrayList();
+//        for (Dot dot: temp){
+//            res.add(firstGraphic.dotIntoItem(dot));
+//        }
+//        return res;
+//    }
+
+    public int getFirstGraphicCount(){
+        return firstGraphic.getCount();
+    }
+    public int getSecondGraphicCount(){
+        return secondGraphic.getCount();
     }
 }

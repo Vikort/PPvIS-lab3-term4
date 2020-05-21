@@ -11,6 +11,10 @@ public class Graphic {
 
     public void addElement(Dot dot)
     {
+        for(Dot d: database){
+            if(d.getX() == dot.getX())
+                return;
+        }
         database.add(dot);
     }
 

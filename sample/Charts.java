@@ -1,29 +1,33 @@
 package sample;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.LineTo;
-import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.scene.transform.Affine;
+import org.w3c.dom.ls.LSOutput;
+
+import java.util.ArrayList;
 
 public class Charts {
+    private Graphic firstGraphic;
+    private Graphic secondGraphic;
     private VBox root;
     private Canvas canvas;
     private GraphicsContext gc;
-    private double width = 600;
-    private double height = 600;
+    private Workspace workspace;
     private double scale = 1; // увеличение
-    private int countX = 0;  //смещение по Х
-    private int countY = 0; // смещение по Y
+    private int shiftX = 0;  //смещение по Х
+    private int shiftY = 0; // смещение по Y
     private Button plusScale;
     private Button minusScale;
     private Button leftButton;
@@ -35,12 +39,17 @@ public class Charts {
     Charts(){
         root = new VBox();
 
+        firstGraphic = new Graphic(new ArrayList<>());
+        secondGraphic = new Graphic(new ArrayList<>());
+
         canvas = new Canvas(600,600);
         gc = canvas.getGraphicsContext2D();
+        workspace = new Workspace();
+
 
         drawAxis(gc, Color.BLACK);
         drawGrid(gc,600,600, (int) (10*scale));
-        drawSign(gc, countX,countY);
+        drawSign(gc, shiftX,shiftY);
 
         plusScale = new Button("+");
         minusScale = new Button("-");
@@ -83,14 +92,15 @@ public class Charts {
         root.getChildren().addAll(canvas,firstTip,secondTip,buttons, movementButtons);
         root.setSpacing(5);
     }
-
+    //отрисовка осей координат
     private void drawAxis(GraphicsContext gc, Color color){
-        drawArrow(gc, -countX * 10,300,600-countX * 10,300,color);// draw xAxis
-        gc.fillText("x",585-countX * 10,315);
-        drawArrow(gc,300,600-countY*10,300,-countY*10,color); // draw yAxis
-        gc.fillText("y",285,15-countY*10);
+        gc.setFont(Font.font(12));
+        drawArrow(gc, -shiftX * 10,300,(600-shiftX * 10)/this.scale,300,color);// draw xAxis
+        gc.fillText("x",(585-shiftX * 10)/this.scale,315);
+        drawArrow(gc,300,(600-shiftY*10)/scale,300,-shiftY*10,color); // draw yAxis
+        gc.fillText("y",285,(15-shiftY*10)/this.scale);
     }
-
+    //отрисовка стрелок цвета color от (x1,y1) до (x2,y2) со стрелкой в конечной точке
     private void drawArrow(GraphicsContext gc, double x1, double y1, double x2, double y2, Color color) {
         gc.setStroke(color);
         gc.setLineWidth(1);
@@ -105,77 +115,152 @@ public class Charts {
         }
     }
 
+    //отрисовка сетки с конечными координатами x и y и мастштабом между клетками scale
     private void drawGrid(GraphicsContext gc,int x,int y, int scale){
         gc.setStroke(Color.GRAY);
         gc.setLineWidth(0.1);
-        for(double i = -countX * 10; i <= x - countX*10; i+=scale){
-            gc.strokeLine(i,-countY*10,i,y-countY*10);
+        for(double i = -shiftX * 10; i <= (x - shiftX*10)/this.scale; i+=scale){
+            gc.strokeLine(i,-shiftY*10,i,(y-shiftY*10)/this.scale);
         }
 
-        for(double i = -countY*10; i <= y - countY*10; i+=scale){
-            gc.strokeLine(-countX*10,i,x-countX*10,i);
+        for(double i = -shiftY*10; i <= (y - shiftY*10)/this.scale; i+=scale){
+            gc.strokeLine(-shiftX*10,i,(x-shiftX*10)/this.scale,i);
         }
     }
-
-    private void drawSign(GraphicsContext gc, int countX, int countY){
+    //отрисовка координат
+    private void drawSign(GraphicsContext gc, int shiftX, int shiftY){
 
         gc.setFill(Color.BLACK);
 
         gc.setFont(Font.font(8));
-        for(int i = (int) (width - (scale*10)-countX*10); i > -countX*10; i-=scale*10*4){
-            gc.fillText(String.valueOf((i-300)/10),i,height/2 + 10);
+        for(int i = (int) ((600 - (scale*10)-shiftX*10)/this.scale); i > -shiftX*10; i-=scale*10*4){
+            gc.fillText(String.valueOf((i-300)/10==0?"":(i-300)/10),i,310);
         }
 
-        for(int i = (int) (scale*10-countY*10); i < height-countY*10; i+=scale*10*4){
-            gc.fillText(String.valueOf(-(i-300)/10),width/2 - 15,i);
+        for(int i = (int) (scale*10-shiftY*10); i < (600-shiftY*10)/this.scale; i+=scale*10*4){
+            gc.fillText(String.valueOf(-(i-300)/10==0?"":-(i-300)/10),285,i);
         }
 
-        gc.fillText("0",width/2 - 10,height/2 + 10);
+        gc.fillText("0",290,310);
     }
 
     private void buttonsActions(){
         plusScale.setOnAction(e->{
             gc.scale(1.25,1.25);
             scale*= 1.25;
-            redraw(Color.DARKBLUE);
+            redraw(Color.BLACK);
         });
 
         minusScale.setOnAction(e->{
             gc.scale(0.8,0.8);
             scale *= 0.8;
-            redraw(Color.DARKBLUE);
+            redraw(Color.BLACK);
         });
 
         leftButton.setOnAction(e->{
             gc.translate(10,0);
-            countX += 1;
-            redraw(Color.DARKBLUE);
+            shiftX += 1;
+            redraw(Color.BLACK);
         });
 
         rightButton.setOnAction(e->{
             gc.translate(-10,0);
-            countX -= 1;
-            redraw(Color.DARKBLUE);
+            shiftX -= 1;
+            redraw(Color.BLACK);
         });
 
         upButton.setOnAction(e->{
             gc.translate(0,10);
-            countY += 1;
-            redraw(Color.DARKBLUE);
+            shiftY += 1;
+            redraw(Color.BLACK);
         });
 
         downButton.setOnAction(e->{
             gc.translate(0,-10);
-            countY -= 1;
-            redraw(Color.DARKBLUE);
+            shiftY -= 1;
+            redraw(Color.BLACK);
+        });
+
+        canvas.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                if(mouseEvent.getEventType() == MouseEvent.MOUSE_PRESSED && mouseEvent.getButton() == MouseButton.PRIMARY){
+                    final double[] mouseBeginX = {mouseEvent.getX()};
+                    final double[] mouseBeginY = {mouseEvent.getY()};
+                    canvas.setOnMouseDragged(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseDragEvent) {
+                            double deltaX = (mouseDragEvent.getX() - mouseBeginX[0])/10;
+                            double deltaY = (mouseDragEvent.getY() - mouseBeginY[0])/10;
+                            if (deltaX >= 1){
+                                leftButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginX[0] += 10;
+                            }else if (deltaX <= -1){
+                                rightButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginX[0] -= 10;
+                            }
+                            if (deltaY >= 1){
+                                upButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginY[0] += 10;
+                            }else if (deltaY <= -1){
+                                downButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginY[0] -= 10;
+                            }
+                        }
+                    });
+                    canvas.setOnMouseReleased(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseReleasedEvent) {
+                            double deltaX = (mouseReleasedEvent.getX() - mouseBeginX[0])/10;
+                            double deltaY = (mouseReleasedEvent.getY() - mouseBeginY[0])/10;
+                            if (deltaX >= 1){
+                                leftButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginX[0] += 10;
+                            }else if (deltaX <= -1){
+                                rightButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginX[0] -= 10;
+                            }
+                            if (deltaY >= 1){
+                                upButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginY[0] += 10;
+                            }else if (deltaY <= -1){
+                                downButton.getOnAction().handle(new ActionEvent());
+                                mouseBeginY[0] -= 10;
+                            }
+                        }
+                    });
+                }
+            }
         });
     }
-
+    //перерисовка видимой области
     private void redraw(Color color){
-        gc.clearRect(-countX*10,-countY*10,600,600);
+        gc.clearRect(-shiftX*10,-shiftY*10,10000,10000);
         drawAxis(gc, color);
         drawGrid(gc,600,600, (int) (10*scale));
-        drawSign(gc, countX, countY);
+        drawSign(gc, shiftX, shiftY);
+        redrawGraphics(gc);
+    }
+
+    private void redrawGraphics(GraphicsContext gc){
+        if(firstGraphic.getCount()!=0){
+            ArrayList<Dot> fg = firstGraphic.getDatabase();
+            for(int i = 0; i < firstGraphic.getCount()-1; i++){
+                Dot firstDot = fg.get(i);
+                Dot secondDot = fg.get(i+1);
+                firstMoveTo(firstDot.getX(),firstDot.getY());
+                firstLine(firstDot.getX(),firstDot.getY(),secondDot.getX(),secondDot.getY());
+            }
+        }
+        if(secondGraphic.getCount()!=0){
+            ArrayList<Dot> fg = secondGraphic.getDatabase();
+            for(int i = 0; i < secondGraphic.getCount()-1; i++){
+                Dot firstDot = fg.get(i);
+                Dot secondDot = fg.get(i+1);
+                secondMoveTo(firstDot.getX(),firstDot.getY());
+                secondLine(firstDot.getX(),firstDot.getY(),secondDot.getX(),secondDot.getY());
+            }
+        }
     }
 
     public VBox getGroup(){
@@ -198,15 +283,44 @@ public class Charts {
         gc.setStroke(Color.RED);
         gc.setLineWidth(1);
         gc.strokeLine((startX+30)*10,(startY+30)*10,(endX+30)*10,(endY+30)*10);
+        firstGraphic.addElement(new Dot(endX,endY));
     }
 
     public void secondLine(double startX, double startY, double endX, double endY){
         gc.setStroke(Color.GREEN);
         gc.setLineWidth(1);
         gc.strokeLine((startX+30)*10,(startY+30)*10,(endX+30)*10,(endY+30)*10);
+        secondGraphic.addElement(new Dot(endX,endY));
     }
 
     public void clear(){
-        gc.clearRect(0,0,width,height);
+        firstGraphic.clear();
+        secondGraphic.clear();
+        this.scale = 1;
+        this.shiftY = 0;
+        this.shiftX = 0;
+        gc.clearRect(-shiftX*10,-shiftY*10,10000,10000);
+        drawAxis(gc, Color.BLACK);
+        drawGrid(gc,600,600, (int) (10*scale));
+        drawSign(gc, shiftX, shiftY);
+    }
+
+    private EventHandler<ScrollEvent> scroll = new EventHandler<ScrollEvent>() {
+        @Override
+        public void handle(ScrollEvent scrollEvent) {
+            if(scrollEvent.getDeltaY() > 0){
+                plusScale.getOnAction().handle(new ActionEvent());
+            } else if (scrollEvent.getDeltaY() < 0){
+                minusScale.getOnAction().handle(new ActionEvent());
+            }
+        }
+    };
+
+    public void setScrollHandler(){
+        canvas.addEventHandler(ScrollEvent.SCROLL,scroll);
+    }
+
+    public void removeScrollHandler(){
+        canvas.removeEventHandler(ScrollEvent.SCROLL,scroll);
     }
 }
