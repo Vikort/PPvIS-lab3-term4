@@ -98,10 +98,7 @@ public class MainScene {
 
     private void buttonsActions(){
         startButton.setOnAction(e -> {
-            if(startButton.getText().equals("continue")){
-                startButton.setText("start");
-                stopButton.setText("stop");
-            }
+            stopButton.setText("stop");
 
             if(toggleGroup.getSelectedToggle() == firstGraphic){
                 if(timer != null){

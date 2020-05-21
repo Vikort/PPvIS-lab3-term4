@@ -10,7 +10,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         MainScene mainScene = new MainScene();
-        primaryStage.setTitle("Hello World");
+        primaryStage.setTitle("Graphics");
         primaryStage.setScene(mainScene.getScene());
         primaryStage.show();
     }

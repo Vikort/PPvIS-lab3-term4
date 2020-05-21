@@ -16,6 +16,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import org.w3c.dom.ls.LSOutput;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 
 public class Charts {
@@ -24,7 +26,6 @@ public class Charts {
     private VBox root;
     private Canvas canvas;
     private GraphicsContext gc;
-    private Workspace workspace;
     private double scale = 1; // увеличение
     private int shiftX = 0;  //смещение по Х
     private int shiftY = 0; // смещение по Y
@@ -34,6 +35,7 @@ public class Charts {
     private Button upButton;
     private Button rightButton;
     private Button downButton;
+    private Text scaleLabel;
 
 
     Charts(){
@@ -44,8 +46,6 @@ public class Charts {
 
         canvas = new Canvas(600,600);
         gc = canvas.getGraphicsContext2D();
-        workspace = new Workspace();
-
 
         drawAxis(gc, Color.BLACK);
         drawGrid(gc,600,600, (int) (10*scale));
@@ -89,7 +89,17 @@ public class Charts {
         HBox secondTip = new HBox(secondLine,secondText);
         secondTip.setAlignment(Pos.CENTER);
 
-        root.getChildren().addAll(canvas,firstTip,secondTip,buttons, movementButtons);
+        VBox tips = new VBox(firstTip,secondTip);
+        tips.setAlignment(Pos.CENTER);
+        tips.setSpacing(5);
+
+        scaleLabel = new Text("x"+scale);
+
+        HBox graphicInfo = new HBox(tips, scaleLabel);
+        graphicInfo.setAlignment(Pos.CENTER);
+        graphicInfo.setSpacing(25);
+
+        root.getChildren().addAll(canvas,graphicInfo,buttons, movementButtons);
         root.setSpacing(5);
     }
     //отрисовка осей координат
@@ -148,12 +158,14 @@ public class Charts {
         plusScale.setOnAction(e->{
             gc.scale(1.25,1.25);
             scale*= 1.25;
+            scaleLabel.setText("x" + round(scale));
             redraw(Color.BLACK);
         });
 
         minusScale.setOnAction(e->{
             gc.scale(0.8,0.8);
             scale *= 0.8;
+            scaleLabel.setText("x" + round(scale));
             redraw(Color.BLACK);
         });
 
@@ -235,7 +247,7 @@ public class Charts {
     }
     //перерисовка видимой области
     private void redraw(Color color){
-        gc.clearRect(-shiftX*10,-shiftY*10,10000,10000);
+        gc.clearRect(-shiftX*10/scale,-shiftY*10/scale,10000,10000);
         drawAxis(gc, color);
         drawGrid(gc,600,600, (int) (10*scale));
         drawSign(gc, shiftX, shiftY);
@@ -322,5 +334,11 @@ public class Charts {
 
     public void removeScrollHandler(){
         canvas.removeEventHandler(ScrollEvent.SCROLL,scroll);
+    }
+
+    private double round(double value) {
+        BigDecimal bd = new BigDecimal(Double.toString(value));
+        bd = bd.setScale(4, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }
